@@ -34,18 +34,6 @@ npm run compile
 npm run deploy:web3
 ```
 
-### Deploy to Ethereum Testnet (Sepolia)
-
-```shell
-npm run deploy:sepolia
-```
-
-### Deploy to Ethereum Mainnet
-
-```shell
-npm run deploy:mainnet
-```
-
 ## Testing
 
 ```shell
