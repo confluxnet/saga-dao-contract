@@ -33,6 +33,13 @@ async function main() {
     fs.readFileSync(path.join(__dirname, "../artifacts/contracts/SagaDAO.sol/SagaDAO.json"), "utf8")
   );
 
+  const billingSystemArtifact = JSON.parse(
+    fs.readFileSync(
+      path.join(__dirname, "../artifacts/contracts/BillingSystem.sol/BillingSystem.json"),
+      "utf8"
+    )
+  );
+
   // Deploy SagaToken
   console.log("Deploying SagaToken...");
   const sagaTokenContract = new web3.eth.Contract(sagaTokenArtifact.abi);
@@ -124,6 +131,25 @@ async function main() {
   console.log(`SagaDAO deployed to: ${sagaDaoTx.options.address}`);
   const sagaDaoAddress = sagaDaoTx.options.address;
 
+  // Deploy BillingSystem
+  console.log("Deploying BillingSystem...");
+  const billingSystemContract = new web3.eth.Contract(billingSystemArtifact.abi);
+  const billingSystemDeploy = billingSystemContract.deploy({
+    data: billingSystemArtifact.bytecode,
+    arguments: [sagaTokenAddress, mcpPoolAddress, sagaDaoAddress],
+  });
+
+  const billingSystemGas = await billingSystemDeploy.estimateGas({ from: account.address });
+  const billingSystemGasPrice = await web3.eth.getGasPrice();
+  const billingSystemTx = await billingSystemDeploy.send({
+    from: account.address,
+    gas: Math.floor(Number(billingSystemGas) * 1.2),
+    gasPrice: billingSystemGasPrice,
+  });
+
+  console.log(`BillingSystem deployed to: ${billingSystemTx.options.address}`);
+  const billingSystemAddress = billingSystemTx.options.address;
+
   // Grant ADMIN_ROLE to SagaDAO
   console.log("Granting ADMIN_ROLE to SagaDAO...");
   const ADMIN_ROLE = web3.utils.keccak256("ADMIN_ROLE");
@@ -140,6 +166,7 @@ async function main() {
     mcpPool: mcpPoolAddress,
     timelock: timelockAddress,
     sagaDao: sagaDaoAddress,
+    billingSystem: billingSystemAddress,
   });
 }
 

@@ -41,6 +41,16 @@ async function main() {
   await sagaDAO.waitForDeployment();
   console.log("SagaDAO deployed to:", await sagaDAO.getAddress());
 
+  // Deploy BillingSystem
+  const BillingSystem = await ethers.getContractFactory("BillingSystem");
+  const billingSystem = await BillingSystem.deploy(
+    await sagaToken.getAddress(),
+    await mcpPool.getAddress(),
+    await sagaDAO.getAddress()
+  );
+  await billingSystem.waitForDeployment();
+  console.log("BillingSystem deployed to:", await billingSystem.getAddress());
+
   // Setup roles
   const PROPOSER_ROLE = await timelock.PROPOSER_ROLE();
   const EXECUTOR_ROLE = await timelock.EXECUTOR_ROLE();
