@@ -7,7 +7,7 @@ This repository contains the smart contracts for the SAGA DAO marketplace, which
 - **SagaToken**: ERC20Votes token for DAO governance
 - **MCPPool**: Core contract for the MCP marketplace
 - **SagaDAO**: DAO governance structure based on OpenZeppelin's Governor
-- **TimelockController**: Manages the execution of proposed actions
+- **BillingSystem**: Handles payments and revenue distribution for MCP usage
 
 ## Setup
 
@@ -33,6 +33,15 @@ npm run compile
 ```shell
 npm run deploy:web3
 ```
+
+## Contract ABIs
+
+After compilation, contract ABIs can be found in the `artifacts/contracts` directory:
+
+- SagaToken: `artifacts/contracts/SagaToken.sol/SagaToken.json`
+- MCPPool: `artifacts/contracts/MCPPool.sol/MCPPool.json`
+- SagaDAO: `artifacts/contracts/SagaDAO.sol/SagaDAO.json`
+- BillingSystem: `artifacts/contracts/BillingSystem.sol/BillingSystem.json`
 
 ## Testing
 
