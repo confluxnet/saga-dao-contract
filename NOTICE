@@ -1,0 +1,26 @@
+SAGA DAO Agent Marketplace
+Copyright 2024 SAGA DAO
+
+This product includes software developed at SAGA DAO (https://saga-dao.org).
+
+This product includes the following third-party software components:
+
+OpenZeppelin Contracts
+Copyright (c) 2016-2023 OpenZeppelin
+Licensed under the MIT License
+https://github.com/OpenZeppelin/openzeppelin-contracts
+
+Hardhat
+Copyright (c) 2019 Nomic Labs S.L.
+Licensed under the MIT License
+https://github.com/nomiclabs/hardhat
+
+ethers.js
+Copyright (c) 2017-2023 Richard Moore
+Licensed under the MIT License
+https://github.com/ethers-io/ethers.js
+
+Web3.js
+Copyright (c) 2014-2023 Ethereum Foundation
+Licensed under the LGPL-3.0 License
+https://github.com/web3/web3.js 

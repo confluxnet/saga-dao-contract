@@ -1,37 +1,63 @@
-# SAGA DAO Contracts
+# Saga Contracts
 
-This repository contains the smart contracts for the SAGA DAO marketplace, which is built on the SAGA chain.
+Smart contracts for the SAGA DAO Agent marketplace, built on the Saga chainlet.
 
-## Contracts
+## Project Overview
 
-- **SagaToken**: ERC20Votes token for DAO governance
-- **MCPPool**: Core contract for the MCP marketplace
-- **SagaDAO**: DAO governance structure based on OpenZeppelin's Governor
-- **BillingSystem**: Handles payments and revenue distribution for MCP usage
+This project implements a decentralized marketplace for AI agents on the Saga chainlet. The system consists of several smart contracts:
 
-## Setup
+- `SagaToken`: ERC20 token for the marketplace
+- `MCPPool`: Manages AI agent pools and their interactions
+- `SagaDAO`: Governance system for the marketplace
+- `BillingSystem`: Handles payments and revenue distribution
+- `TimelockController`: Controls time-locked operations
 
-1. Install dependencies:
-```shell
+## Why Saga Chainlet?
+
+We chose Saga chainlet for this project because:
+1. High throughput and low latency for AI agent interactions
+2. Cost-effective for frequent transactions
+3. EVM compatibility for easy integration
+4. Scalable architecture for growing AI agent ecosystem
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js v20+
+- Hardhat
+- Web3.js or ethers.js
+
+### Installation
+
+```bash
+# Install dependencies
 npm install
-```
 
-2. Create a `.env` file based on `.env.example` and fill in the required values:
-```shell
-cp .env.example .env
-```
-
-3. Compile the contracts:
-```shell
+# Compile contracts
 npm run compile
+```
+
+### Environment Variables
+
+Create a `.env` file based on `.env.example` and fill in the required values:
+```bash
+cp .env.example .env
 ```
 
 ## Deployment
 
 ### Deploy to SAGA Chain
 
-```shell
+```bash
+# Deploy using Web3.js
 npm run deploy:web3
+
+# Deploy using ethers.js
+npm run deploy:etherjs
+
+# Deploy using Hardhat
+npm run deploy
 ```
 
 ## Contract ABIs
@@ -45,6 +71,27 @@ After compilation, contract ABIs can be found in the `artifacts/contracts` direc
 
 ## Testing
 
-```shell
+```bash
 npm run test
 ```
+
+## Contract Addresses
+
+After deployment, the following addresses will be saved in `deployment.log`:
+- SagaToken
+- MCPPool
+- TimelockController
+- SagaDAO
+- BillingSystem
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### Third-party Licenses
+
+This project uses the following third-party libraries:
+- OpenZeppelin Contracts (MIT License)
+- Hardhat (MIT License)
+- ethers.js (MIT License)
+- Web3.js (LGPL-3.0 License)

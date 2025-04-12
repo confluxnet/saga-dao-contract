@@ -33,7 +33,7 @@ CONTRACTS.forEach((contractName) => {
     const sourceContent = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
 
     // Extract only the ABI
-    const abi = sourceContent.abi;
+    const abi = sourceContent;
 
     // Write the ABI to the target file
     fs.writeFileSync(targetPath, JSON.stringify(abi, null, 2));
