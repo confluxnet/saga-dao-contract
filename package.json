@@ -8,7 +8,9 @@
     "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
     "deploy:mainnet": "hardhat run scripts/deploy.ts --network mainnet",
     "deploy:saga": "hardhat run scripts/deploy.ts --network saga",
-    "deploy:web3": "node scripts/deploy-saga.js"
+    "deploy:web3": "node scripts/deploy-saga.js",
+    "update:mcpdog": "node scripts/update-mcpdog-abi.js",
+    "deploy:full": "npm run compile && npm run deploy:web3 && npm run update:mcpdog"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.5",

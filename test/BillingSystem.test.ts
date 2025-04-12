@@ -1,53 +1,67 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { Contract } from "ethers";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+import { SagaToken, BillingSystem, MCPPool, SagaDAO } from "../typechain-types";
+import { keccak256, toUtf8Bytes, parseEther } from "ethers";
 
 describe("BillingSystem", function () {
-  let sagaToken: Contract;
-  let mcpPool: Contract;
-  let dao: Contract;
-  let billingSystem: Contract;
+  let sagaToken: SagaToken;
+  let mcpPool: MCPPool;
+  let sagaDAO: SagaDAO;
+  let billingSystem: BillingSystem;
+  let timelock: any;
   let owner: SignerWithAddress;
   let provider: SignerWithAddress;
   let user: SignerWithAddress;
   let operator: SignerWithAddress;
   let treasurer: SignerWithAddress;
 
-  const OPERATOR_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("OPERATOR_ROLE"));
-  const TREASURER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("TREASURER_ROLE"));
-  const INITIAL_SUPPLY = ethers.utils.parseEther("1000000");
-  const PAYMENT_AMOUNT = ethers.utils.parseEther("100");
+  const OPERATOR_ROLE = keccak256(toUtf8Bytes("OPERATOR_ROLE"));
+  const TREASURER_ROLE = keccak256(toUtf8Bytes("TREASURER_ROLE"));
+  const INITIAL_SUPPLY = ethers.parseEther("1000000");
+  const PAYMENT_AMOUNT = ethers.parseEther("100");
 
-  beforeEach(async function () {
-    [owner, provider, user, operator, treasurer] = await ethers.getSigners();
+  beforeEach(async () => {
+    [owner, operator, provider, treasurer, user] = await ethers.getSigners();
 
     // Deploy SagaToken
-    const SagaToken = await ethers.getContractFactory("SagaToken");
-    sagaToken = await SagaToken.deploy();
-    await sagaToken.deployed();
+    const SagaTokenFactory = await ethers.getContractFactory("SagaToken");
+    sagaToken = (await SagaTokenFactory.deploy()) as SagaToken;
+    await sagaToken.waitForDeployment();
 
-    // Deploy MCPPool (mock)
-    const MCPPool = await ethers.getContractFactory("MCPPool");
-    mcpPool = await MCPPool.deploy(sagaToken.address);
-    await mcpPool.deployed();
+    // Deploy MCPPool
+    const MCPPoolFactory = await ethers.getContractFactory("MCPPool");
+    mcpPool = (await MCPPoolFactory.deploy(await sagaToken.getAddress(), owner.address)) as MCPPool;
+    await mcpPool.waitForDeployment();
 
-    // Deploy DAO (mock)
-    const Dao = await ethers.getContractFactory("SagaDAO");
-    dao = await Dao.deploy(sagaToken.address, mcpPool.address);
-    await dao.deployed();
+    // Deploy SagaDAO
+    const SagaDAOFactory = await ethers.getContractFactory("SagaDAO");
+    sagaDAO = (await SagaDAOFactory.deploy(
+      await sagaToken.getAddress(),
+      ethers.ZeroAddress, // Using zero address for timelock in tests
+      await mcpPool.getAddress()
+    )) as SagaDAO;
+    await sagaDAO.waitForDeployment();
 
     // Deploy BillingSystem
-    const BillingSystem = await ethers.getContractFactory("BillingSystem");
-    billingSystem = await BillingSystem.deploy(sagaToken.address, mcpPool.address, dao.address);
-    await billingSystem.deployed();
+    const BillingSystemFactory = await ethers.getContractFactory("BillingSystem");
+    billingSystem = (await BillingSystemFactory.deploy(
+      await sagaToken.getAddress(),
+      await mcpPool.getAddress(),
+      await sagaDAO.getAddress()
+    )) as BillingSystem;
+    await billingSystem.waitForDeployment();
 
-    // Setup roles
-    await billingSystem.grantRole(OPERATOR_ROLE, operator.address);
-    await billingSystem.grantRole(TREASURER_ROLE, treasurer.address);
+    // Mint tokens to owner and approve BillingSystem
+    await sagaToken.mint(owner.address, ethers.parseEther("1000"));
+    await sagaToken.approve(await billingSystem.getAddress(), ethers.parseEther("1000"));
 
-    // Transfer tokens to user
-    await sagaToken.transfer(user.address, INITIAL_SUPPLY);
+    // Set up roles
+    await billingSystem.grantRole(await billingSystem.OPERATOR_ROLE(), operator.address);
+    await billingSystem.grantRole(await billingSystem.TREASURER_ROLE(), treasurer.address);
+
+    // Transfer tokens to contract
+    await billingSystem.transferTokensToContract(ethers.parseEther("1000"));
   });
 
   describe("Deployment", function () {
@@ -57,15 +71,15 @@ describe("BillingSystem", function () {
     });
 
     it("Should assign the correct token address", async function () {
-      expect(await billingSystem.sagaToken()).to.equal(sagaToken.address);
+      expect(await billingSystem.sagaToken()).to.equal(await sagaToken.getAddress());
     });
 
     it("Should assign the correct MCP pool address", async function () {
-      expect(await billingSystem.mcpPool()).to.equal(mcpPool.address);
+      expect(await billingSystem.mcpPool()).to.equal(await mcpPool.getAddress());
     });
 
     it("Should assign the correct DAO address", async function () {
-      expect(await billingSystem.dao()).to.equal(dao.address);
+      expect(await billingSystem.dao()).to.equal(await sagaDAO.getAddress());
     });
   });
 
@@ -85,7 +99,9 @@ describe("BillingSystem", function () {
     it("Should fail if non-operator tries to process payment", async function () {
       await expect(
         billingSystem.connect(user).processPayment(user.address, provider.address, PAYMENT_AMOUNT)
-      ).to.be.revertedWith("AccessControl:");
+      ).to.be.revertedWith(
+        `AccessControl: account ${user.address.toLowerCase()} is missing role ${await billingSystem.OPERATOR_ROLE()}`
+      );
     });
   });
 
@@ -106,9 +122,9 @@ describe("BillingSystem", function () {
       const daoBalance = await billingSystem.getDaoBalance();
 
       // 95% goes to provider (100% - 2% platform - 3% DAO)
-      expect(providerBalance).to.equal(PAYMENT_AMOUNT.mul(95).div(100));
+      expect(providerBalance).to.equal((PAYMENT_AMOUNT * 95n) / 100n);
       // 3% goes to DAO
-      expect(daoBalance).to.equal(PAYMENT_AMOUNT.mul(3).div(100));
+      expect(daoBalance).to.equal((PAYMENT_AMOUNT * 3n) / 100n);
     });
 
     it("Should fail if payment already processed", async function () {
@@ -132,22 +148,22 @@ describe("BillingSystem", function () {
       await billingSystem.connect(provider).withdrawProviderFunds();
       const finalBalance = await sagaToken.balanceOf(provider.address);
 
-      expect(finalBalance.sub(initialBalance)).to.equal(PAYMENT_AMOUNT.mul(95).div(100));
-      expect(await billingSystem.getProviderBalance(provider.address)).to.equal(0);
+      expect(finalBalance - initialBalance).to.equal((PAYMENT_AMOUNT * 95n) / 100n);
+      expect(await billingSystem.getProviderBalance(provider.address)).to.equal(0n);
     });
 
     it("Should allow treasurer to withdraw DAO funds", async function () {
-      const initialBalance = await sagaToken.balanceOf(dao.address);
+      const initialBalance = await sagaToken.balanceOf(await sagaDAO.getAddress());
       await billingSystem.connect(treasurer).withdrawDaoFunds();
-      const finalBalance = await sagaToken.balanceOf(dao.address);
+      const finalBalance = await sagaToken.balanceOf(await sagaDAO.getAddress());
 
-      expect(finalBalance.sub(initialBalance)).to.equal(PAYMENT_AMOUNT.mul(3).div(100));
-      expect(await billingSystem.getDaoBalance()).to.equal(0);
+      expect(finalBalance - initialBalance).to.equal((PAYMENT_AMOUNT * 3n) / 100n);
+      expect(await billingSystem.getDaoBalance()).to.equal(0n);
     });
 
     it("Should fail if non-treasurer tries to withdraw DAO funds", async function () {
-      await expect(billingSystem.connect(provider).withdrawDaoFunds()).to.be.revertedWith(
-        "AccessControl:"
+      await expect(billingSystem.connect(user).withdrawDaoFunds()).to.be.revertedWith(
+        `AccessControl: account ${user.address.toLowerCase()} is missing role ${await billingSystem.TREASURER_ROLE()}`
       );
     });
   });

@@ -79,6 +79,10 @@ contract BillingSystem is AccessControl, ReentrancyGuard {
         _setRoleAdmin(role, DEFAULT_ADMIN_ROLE);
     }
     
+    function transferTokensToContract(uint256 amount) external {
+        require(sagaToken.transferFrom(msg.sender, address(this), amount), "Token transfer failed");
+    }
+    
     function processPayment(
         address payer,
         address provider,
