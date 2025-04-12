@@ -1,0 +1,24 @@
+{
+  "name": "saga-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for SAGA DAO marketplace",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
+    "deploy:mainnet": "hardhat run scripts/deploy.ts --network mainnet",
+    "deploy:saga": "hardhat run scripts/deploy.ts --network saga",
+    "deploy:web3": "node scripts/deploy-saga.js"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.9.5",
+    "dotenv": "^16.4.5",
+    "web3": "^4.16.0"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@types/node": "^20.11.24",
+    "hardhat": "^2.20.1",
+    "typescript": "^5.3.3"
+  }
+}
